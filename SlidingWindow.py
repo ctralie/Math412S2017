@@ -49,6 +49,23 @@ def getSlidingWindowNoInterp(x, dim):
     for i in range(NWindows):
         X[i, :] = x[i:i+dim]
     return X
+
+def getSlidingWindowInteger(x, dim, Tau, dT):
+    """
+    Similar to the above function
+    """
+    N = len(x)
+    NWindows = int(np.floor((N-dim*Tau)/dT)) #The number of windows
+    if NWindows <= 0:
+        print("Error: Tau too large for signal extent")
+        return np.zeros((3, dim))
+    X = np.zeros((NWindows, dim)) #Create a 2D array which will store all windows
+    idx = np.arange(N)
+    for i in range(NWindows):
+        #Figure out the indices of the samples in this window
+        idxx = np.array(dT*i + Tau*np.arange(dim), dtype=np.int32)
+        X[i, :] = x[idxx]
+    return X
         
 
 """

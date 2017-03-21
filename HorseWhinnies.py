@@ -1,5 +1,5 @@
 """
-Programmer: Chris Tralie
+Programmer: Chris Tralie (ctralie@alumni.princeton.edu)
 Purpose: To show how TDA can be used to quantify quasiperiodicity
 in an audio clip of horse whinnies
 """

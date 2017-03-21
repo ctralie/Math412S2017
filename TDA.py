@@ -101,11 +101,11 @@ def doRipsFiltrationDM(D, maxHomDim, thresh = -1, coeff = 2):
             break
         if output:
             s = output.strip()
-            if output[0:4] == "dist":
+            if output[0:4] == b"dist":
                 continue
-            elif output[0:4] == "valu":
+            elif output[0:4] == b"valu":
                 continue
-            elif output[0:4] == "pers":
+            elif output[0:4] == b"pers":
                 if len(PDs) > 0:
                     PDs[-1] = np.array(PDs[-1])
                 PDs.append([])
