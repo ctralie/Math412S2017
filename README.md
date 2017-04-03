@@ -21,3 +21,7 @@ Now you should be able to run all of the examples:
 * MusicSpeech.py: Running TDA on audio novelty functions to discover rhythmic periodicity in music.  Comparing journey.wav to speech.wav
 
 * MusicFeatures.py: Quick and dirty music feature computation (MFCC, audio novelty functions) from spectrograms
+
+* VideoTools.py: Code for doing sliding window videos
+
+* testVideo.py: Code for testing sliding window videos
