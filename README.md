@@ -25,3 +25,11 @@ Now you should be able to run all of the examples:
 * VideoTools.py: Code for doing sliding window videos
 
 * testVideo.py: Code for testing sliding window videos
+
+* RipsFiltrationDM.m: A Matlab wrapper around ripser over distance matrices
+
+* RipsFiltrationPC.m: A Matlab wrapper around ripser over point clouds
+
+* plotpersistencediagrams.m: A function to plot all persistence diagrams on top of each other
+
+* TorusExample: An Matlab example of persistent H0, H1, and H2 on a sampled torus
