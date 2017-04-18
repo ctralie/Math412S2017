@@ -33,3 +33,12 @@ Now you should be able to run all of the examples:
 * plotpersistencediagrams.m: A function to plot all persistence diagrams on top of each other
 
 * TorusExample: An Matlab example of persistent H0, H1, and H2 on a sampled torus
+
+# Persistence Diagram Matching Tools
+
+There is also Python code to compare persistence diagrams using a variety of algorithms (DGMTools.py).  To compute the Wasserstein Distance, you will need to install a library that implements the Hungarian algorithm for maximum flow bipartite matching.  To do this, type
+
+~~~~~ bash
+pip install hungarian
+~~~~~
+
