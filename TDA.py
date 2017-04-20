@@ -75,7 +75,6 @@ def getBottleneckDist(PD1, PD2):
     proc = subprocess.Popen(["./bottleneck", "PD1.txt", "PD2.txt"], stdout=subprocess.PIPE)
     return float(proc.stdout.readline())
 
-
 def doRipsFiltrationDM(D, maxHomDim, thresh = -1, coeff = 2):
     N = D.shape[0]
     #Step 1: Extract and output lower triangular distance matrix
@@ -110,14 +109,17 @@ def doRipsFiltrationDM(D, maxHomDim, thresh = -1, coeff = 2):
                     PDs[-1] = np.array(PDs[-1])
                 PDs.append([])
             else:
+                s = s.replace("[", "")
+                s = s.replace("]", "")
+                s = s.replace("(", "")
+                s = s.replace(")", "")
+                s = s.replace(" ", "")
                 fields = s.split(",")
-                b = float(fields[0][1::])
-                d = 0
-                if len(fields[1]) > 2:
-                    d = float(fields[1][0:-1])
-                    PDs[-1].append([b, d])
-                else:
-                    PDs[-1].append([b, -1]) #By default -1 is infinite death time
+                b = float(fields[0])
+                d = -1
+                if len(fields[1]) > 0:
+                    d = float(fields[1])
+                PDs[-1].append([b, d])
         rc = proc.poll()
     PDs[-1] = np.array(PDs[-1])
     return PDs
