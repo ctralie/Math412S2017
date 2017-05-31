@@ -100,7 +100,8 @@ def getLinePatches(dim, NAngles, NOffsets, sigma = 1):
     N = NAngles*NOffsets
     P = np.zeros((N, dim*dim))
     thetas = np.linspace(0, np.pi, NAngles+1)[0:NAngles]
-    ps = np.linspace(-0.5*np.sqrt(2), 0.5*np.sqrt(2), NOffsets)
+    #ps = np.linspace(-0.5*np.sqrt(2), 0.5*np.sqrt(2), NOffsets)
+    ps = np.linspace(-1, 1, NOffsets)
     idx = 0
     [Y, X] = np.meshgrid(np.linspace(-0.5, 0.5, dim), np.linspace(-0.5, 0.5, dim))
     for i in range(NAngles):
@@ -204,5 +205,5 @@ def doLinePatchesVariation(dim, pres = 20):
 
 if __name__ == '__main__':
     doLinePatchesVariation(50)
-    P = getLinePatches(50, 16, 16, 0.275)
-    plotLinePatches(P, "Line")
+    #P = getLinePatches(50, 20, 20, 0.43)
+    #plotLinePatches(P, "Line")
