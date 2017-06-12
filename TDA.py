@@ -121,7 +121,8 @@ def doRipsFiltrationDM(D, maxHomDim, thresh = -1, coeff = 2):
                     d = float(fields[1])
                 PDs[-1].append([b, d])
         rc = proc.poll()
-    PDs[-1] = np.array(PDs[-1])
+    if len(PDs) > 0:
+        PDs[-1] = np.array(PDs[-1])
     return PDs
 
 #Wrapper around Uli Bauer's ripser code
