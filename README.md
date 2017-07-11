@@ -3,7 +3,13 @@ Code for John's students for delay reconstruction and fast Rips code with "Ripse
 
 # Installation Instructions
 
-To run this code, you will need to compile Ripser.  Go into the ``ripser'' directory, and type the following
+To run this code, you will need to checkout and compile Ripser.  First, run the following command
+
+~~~~~ bash
+git checkout --recursive https://github.com/ctralie/Math412S2017.git
+~~~~~
+
+Then, go into the ``ripser'' directory, and type the following
 
 ~~~~~ bash
 make ripser
