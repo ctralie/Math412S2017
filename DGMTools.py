@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import skimage.draw as skdraw #Used for fast landscape triangle rastering
 import scipy.misc #Used for downsampling rasterized images avoiding aliasing
 import time #For timing kernel comparison
-import sklearn.metrics.pairwise
 from TDA import *
+from mwmatching import *
 
 ##############################################################################
 ##########                  Plotting Functions                      ##########    
@@ -62,7 +62,11 @@ def getWassersteinDist(S, T):
     if M == 0:
         T = np.array([[0, 0]])
         M = 1
-    DUL = sklearn.metrics.pairwise.pairwise_distances(S, T)
+    SSqr = np.sum(S**2, 1)
+    TSqr = np.sum(T**2, 1)
+    DUL = SSqr[:, None] + TSqr[None, :] - 2*S.dot(T.T)
+    DUL[DUL < 0] = 0
+    DUL = np.sqrt(DUL)
     
     #Put diagonal elements into the matrix
     #Rotate the diagrams to make it easy to find the straight line
@@ -92,6 +96,47 @@ def getWassersteinDist(S, T):
    
     return (matchidx, matchdist, D)
 
+def getBottleneckDist(S, T):
+    N = S.shape[0]
+    M = T.shape[0]
+    #Handle the cases where there are no points in the diagrams
+    if N == 0:
+        S = np.array([[0, 0]])
+        N = 1
+    if M == 0:
+        T = np.array([[0, 0]])
+        M = 1
+    #L Infinity Distance    
+    D1 = abs(S[:, 0][:, None] - T[:, 0][None, :])
+    D2 = abs(S[:, 1][:, None] - T[:, 1][None, :])
+    DUL = np.maximum(D1, D2)
+    
+    #Put diagonal elements into matrix
+    D = np.zeros((N+M, N+M))
+    D[0:N, 0:M] = DUL
+    UR = np.max(D)*np.ones((N, N))
+    np.fill_diagonal(UR, 0.5*(S[:, 1] - S[:, 0]))
+    D[0:N, M::] = UR
+    UL = np.max(D)*np.ones((M, M))
+    np.fill_diagonal(UL, 0.5*(T[:, 1] - T[:, 0]))
+    D[N::, 0:M] = UL
+    
+    #TODO: Slow linear search right now
+    #Change to a binary search on the unique distances
+    ds = np.sort(np.unique(D))[1::] #Ignore 0 distance
+    [J, I] = np.meshgrid(np.arange(D.shape[1]), np.arange(D.shape[0]))
+    dret = np.inf
+    for d in ds:
+        A = (D <= d)
+        rows = I[A == 1]
+        cols = J[A == 1]
+        edges = [(rows[i], cols[i]+D.shape[0], 1) for i in range(len(rows))]
+        outmate = maxWeightMatching(edges)
+        outmate = np.array(outmate)
+        if np.sum(outmate == -1) == 0:
+            dret = d
+            break
+    return dret
 
 def sortAndGrab(dgm, NBars = 10, BirthTimes = False):
     """
@@ -212,6 +257,8 @@ if __name__ == '__main__':
     PDsY = doRipsFiltration(Y, 1)
     I2 = PDsY[1]
     (matchidx, matchdist, D) = getWassersteinDist(I1, I2)
+    
+    print getBottleneckDist(I1, I2)
     
     plt.figure(figsize=(12, 5))
     plt.subplot(131)
