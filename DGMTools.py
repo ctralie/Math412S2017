@@ -123,7 +123,7 @@ def getBottleneckDist(S, T):
     
     #TODO: Slow linear search right now
     #Change to a binary search on the unique distances
-    ds = np.sort(np.unique(D))[1::] #Ignore 0 distance
+    ds = np.sort(np.unique(D))
     [J, I] = np.meshgrid(np.arange(D.shape[1]), np.arange(D.shape[0]))
     dret = np.inf
     for d in ds:
