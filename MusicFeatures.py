@@ -21,7 +21,7 @@ def Specgram(X, W, H):
     """
     Q = W/H
     if Q - np.floor(Q) > 0:
-        fprintf(1, 'Warning: Window size is not integer multiple of hop size\n');
+        print('Warning: Window size is not integer multiple of hop size\n')
     win = np.hamming(W)
     NWin = int(np.floor((len(X) - W)/float(H)) + 1)
     S = np.zeros((NWin, W))
@@ -74,8 +74,6 @@ def getAudioNoveltyFn(x, Fs, winSize, hopSize):
     M = getMelFilterbank(Fs, winSize, 40, 30, 8000)
     M = M[:, 0:S.shape[1]]
     X = M.dot(S.T)
-    print "S.shape = ", S.shape
-    print "M.shape = ", M.shape
     
     novFn = X[:, 1::] - X[:, 0:-1]
     novFn[novFn < 0] = 0
@@ -93,8 +91,6 @@ if __name__ == '__main__':
     nsamples = 500
     novFn = novFn[0:nsamples]
     t = np.arange(nsamples)*hopSize/float(Fs)
-    print "len(t) = ", len(t)
-    print "len(novFn) = ", len(novFn)
     
     plt.subplot(211)
     plt.imshow(np.log(S.T), cmap = 'afmhot', aspect = 'auto')
