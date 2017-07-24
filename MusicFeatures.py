@@ -1,7 +1,7 @@
 """
 Programmer: Chris Tralie (ctralie@alumni.princeton.edu)
-Purpose: Code to compute features on audio files, including MFCC
-and audio novelty
+Purpose: Code to compute features on audio files, including
+audio novelty
 """
 import numpy as np
 import numpy.linalg as linalg
@@ -12,100 +12,92 @@ from scipy.fftpack import dct
 import matplotlib.pyplot as plt
 
 
-#Mirror what Matlab's code does
-def STFTNoOverlapZeropad(X, hopSize):
-    N = X.shape[0]
-    ham = np.hamming(hopSize) #Use hamming window
-    #Zeropad X so that there are an integer number of hopSize intervals
-    NWindows = int(np.ceil(N/float(hopSize)))
-    S = np.zeros((hopSize, NWindows), dtype = np.float32)
-    x = np.zeros(hopSize)
-    for i in range(NWindows):
-        x = 0*x
-        n = len(X[i*hopSize:(i+1)*hopSize])
-        x[0:n] = X[i*hopSize:(i+1)*hopSize]
-        S[:, i] = np.abs(np.fft.fft(ham*x))
+def Specgram(X, W, H):
+    """A function to compute the spectrogram of a signal
+    :parm X: N x 1 Audio Signal
+    :param W: Window Size
+    :param H HopSize
+    :returns: S, an N x NBins spectrogram array
+    """
+    Q = W/H
+    if Q - np.floor(Q) > 0:
+        fprintf(1, 'Warning: Window size is not integer multiple of hop size\n');
+    win = np.hamming(W)
+    NWin = int(np.floor((len(X) - W)/float(H)) + 1)
+    S = np.zeros((NWin, W))
+    for i in range(NWin):
+        x = X[i*H:i*H+W]
+        S[i, :] = np.abs(np.fft.fft(win*x))
+    #Second half of the spectrum is redundant for real signals
+    if W % 2 == 0:
+        #Even Case
+        S = S[:, 0:W/2]
+    else:
+        #Odd Case
+        S = S[:, 0:(W-1)/2+1]
     return S
 
-def getMFCC(X, Fs, hopSize, MEL_NBANDS = 40, MEL_NMFCC = 20, MEL_MINFREQ = 50, MEL_MAXFREQ = 4000, lifterexp = 0):
-    """
-    Return the MFCC coefficients
-    :param X: Audio Signal
-    :param Fs: Sample Rate
-    :param hopSize: Hop size between windows
-    :param lifterexp: Liftering to emphasize higher coefficients
-    """
-    X = np.array(X, dtype=np.float32)
-    #Data is not normalized when read in.  Assume 16 bit
-    X = X/(2.0**15)
-    if len(X.shape) > 1 and X.shape[1] > 1:
-        #Merge to mono if there is more than one channel
-        X = X.mean(1)
-    X = X.flatten()
-
-    #Compute spectrogram
-    S = STFTNoOverlapZeropad(X, hopSize) #Spectrogram
-    SHalf = S[0:hopSize/2+1, :] #Non-redundant spectrogram
-    P = SHalf**2 #Periodogram
-    NSpectrumSamples = SHalf.shape[0]
-    NAWindows = S.shape[1]
-
+def getMelFilterbank( Fs, winSize, nbands, minfreq, maxfreq ):
+    #Purpose: Return a mel-spaced triangle filterbank
     #Step 1: Warp to the mel-frequency scale
-    melbounds = np.array([MEL_MINFREQ, MEL_MAXFREQ])
+    melbounds = np.array([minfreq, maxfreq])
     melbounds = 1125*np.log(1 + melbounds/700.0)
-    mel = np.linspace(melbounds[0], melbounds[1], MEL_NBANDS)
+    mel = np.linspace(melbounds[0], melbounds[1], nbands)
     binfreqs = 700*(np.exp(mel/1125.0) - 1)
-    binbins = np.floor(((hopSize-1)/float(Fs))*binfreqs) #Floor to the nearest bin
-    binbins = np.array(binbins, dtype=np.int64)
+    binbins = np.ceil(((winSize-1)/float(Fs))*binfreqs) #Ceil to the nearest bin
 
     #Step 2: Create mel triangular filterbank
-    melfbank = np.zeros((MEL_NBANDS, NSpectrumSamples))
-    for i in range(MEL_NBANDS):
+    melfbank = np.zeros((nbands, winSize))
+    for i in range(nbands):
        thisbin = binbins[i]
        lbin = thisbin
        if i > 0:
            lbin = binbins[i-1]
        rbin = thisbin + (thisbin - lbin)
-       if i < MEL_NBANDS - 1:
+       if i < nbands-1:
            rbin = binbins[i+1]
        melfbank[i, lbin:thisbin+1] = np.linspace(0, 1, 1 + (thisbin - lbin))
        melfbank[i, thisbin:rbin+1] = np.linspace(1, 0, 1 + (rbin - thisbin))
+    return melfbank
 
-    #Step 3: Apply mel filterbank to periodogram, and compute log of the result
-    MFCC = np.array( [melfbank.dot(P[:, i].T) for i in range(NAWindows)] ).T
-    MFCC[MFCC <= 0] = 1
-    MFCC = np.log(MFCC)
 
-    #Step 4: Compute DCT and return mel coefficients
-    MFCCDCT = dct(MFCC, axis = 0, norm = 'ortho')
-    MFCCDCT = MFCC[0:MEL_NMFCC, :]
+def getAudioNoveltyFn(x, Fs, winSize, hopSize):
+    """
+    Using techniques from
+    Ellis, Daniel PW. "Beat tracking by dynamic programming." 
+    Journal of New Music Research 36.1 (2007): 51-60.
+    """
     
-    #Step 5: Do Liftering
-    coeffs = np.arange(MFCCDCT.shape[0])**lifterexp
-    coeffs[0] = 1
-    MFCCDCT = coeffs[:, None]*MFCCDCT
+    #First compute mel-spaced STFT
+    S = Specgram(x, winSize, hopSize)
+    S = np.abs(S)
+    M = getMelFilterbank(Fs, winSize, 40, 30, 8000)
+    M = M[:, 0:S.shape[1]]
+    X = M.dot(S.T)
+    print "S.shape = ", S.shape
+    print "M.shape = ", M.shape
     
-    return (MFCC, MFCCDCT, P)
+    novFn = X[:, 1::] - X[:, 0:-1]
+    novFn[novFn < 0] = 0
+    novFn = np.sum(novFn, 0)
+    return (S, novFn)
 
-def getAudioNovelty(X, Fs, hopSize):
-    (MFCC, MFCCDCT, P) = getMFCC(X, Fs, hopSize)
-    diff = MFCC[:, 1::] - MFCC[:, 0:-1]
-    diff[diff < 0] = 0
-    return np.sum(diff, 0)
 
 if __name__ == '__main__':
     Fs, X = scipy.io.wavfile.read("journey.wav")
-    hopSize = 512
-    (MFCC, MFCCDCT, P) = getMFCC(X, Fs, hopSize)
-    novFn = getAudioNovelty(X, Fs, hopSize)
+    X = X/(2.0**15) #Audio is loaded in as 16 bit shorts.  Convert to float
+    winSize = 512
+    hopSize = 256
+    (S, novFn) = getAudioNoveltyFn(X, Fs, winSize, hopSize)
     
-    nsamples = 400
-    P = P[:, 0:nsamples]
+    nsamples = 500
     novFn = novFn[0:nsamples]
     t = np.arange(nsamples)*hopSize/float(Fs)
+    print "len(t) = ", len(t)
+    print "len(novFn) = ", len(novFn)
     
     plt.subplot(211)
-    plt.imshow(np.log(P), cmap = 'afmhot', aspect = 'auto')
+    plt.imshow(np.log(S.T), cmap = 'afmhot', aspect = 'auto')
     plt.title("Spectrogram")
     plt.axis('off')
     plt.subplot(212)
